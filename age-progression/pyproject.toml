@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "age-progression"
+version = "0.1.0"
+description = ""
+authors = ["sinasalek <salek.sina@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+torch = "2.2.2"
+torchvision = "0.17.2"
+scikit-learn = "1.5.2"
+matplotlib = "3.9.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
