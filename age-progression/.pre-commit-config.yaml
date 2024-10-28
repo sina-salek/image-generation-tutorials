@@ -38,4 +38,4 @@ repos:
       hooks:
           - id: blacken-docs
             additional_dependencies:
-              - black==22.12.0  # Ensure blacken-docs uses the same Black version
+              - black==24.10.0  # Ensure blacken-docs uses the same Black version
