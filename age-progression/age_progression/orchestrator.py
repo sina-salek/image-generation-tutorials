@@ -1,15 +1,11 @@
+import numpy as np
 import torch
 import torch.optim as optim
-from torch.autograd import Variable
-from torchvision import transforms
-import matplotlib.pyplot as plt
+from constants import BATCH_SIZE, DEVICE, EPOCHS, LATENT_DIM, LEARNING_RATE
+from plotting import generate_images, plot_latent_space
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.model_selection import train_test_split
-import numpy as np
-
 from vae import VAE, loss_function
-from constants import LATENT_DIM, EPOCHS, BATCH_SIZE, LEARNING_RATE, DEVICE
-from plotting import plot_latent_space, generate_images
 
 # Load Olivetti Faces Dataset
 data = fetch_olivetti_faces()

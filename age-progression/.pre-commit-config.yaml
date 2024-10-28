@@ -1,0 +1,41 @@
+repos:
+    # Collection of pre-commit hooks for various basic checks
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.5.0  # Updated version
+      hooks:
+          - id: check-ast  # Verifies that Python files have a valid abstract syntax tree
+          - id: fix-byte-order-marker  # Removes byte-order marker characters
+          - id: check-case-conflict  # Checks for potential case conflicts in filenames across operating systems
+          - id: check-docstring-first  # Ensures the first thing in Python files is a docstring
+          - id: check-json  # Validates the syntax of JSON files
+          - id: check-yaml  # Validates the syntax of YAML files
+          - id: debug-statements  # Detects leftover debug statements (like `pdb.set_trace()`)
+          - id: detect-private-key  # Scans for private keys accidentally committed
+          - id: end-of-file-fixer  # Ensures a newline at the end of files
+          - id: trailing-whitespace  # Trims trailing whitespace
+          - id: mixed-line-ending  # Standardizes line endings (LF vs CRLF)
+          - id: check-added-large-files  # Prevents committing large files
+
+    # Mypy for static type checking, with updated version and custom settings
+    - repo: https://github.com/pre-commit/mirrors-mypy
+      rev: v1.8.0  # Updated version
+      hooks:
+          - id: mypy
+            args: [--ignore-missing-imports, --namespace-packages]  # Arguments for mypy
+            additional_dependencies: [types-PyYAML]  # Additional dependencies needed for mypy
+
+    # Isort for Python import sorting, with Black code style
+    - repo: https://github.com/pre-commit/mirrors-isort
+      rev: v5.10.1
+      hooks:
+          - id: isort
+            args: [--profile, "black"]  # Set to use Black's style for import sorting
+
+
+    # blacken-docs for formatting code blocks in documentation files
+    - repo: https://github.com/asottile/blacken-docs
+      rev: 1.16.0
+      hooks:
+          - id: blacken-docs
+            additional_dependencies:
+              - black==22.12.0  # Ensure blacken-docs uses the same Black version
