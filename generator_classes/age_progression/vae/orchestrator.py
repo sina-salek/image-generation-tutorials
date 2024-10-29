@@ -2,7 +2,7 @@ import numpy as np
 import optuna
 import torch
 import torch.optim as optim
-from constants import BATCH_SIZE, DEVICE, EPOCHS, LATENT_DIM, LEARNING_RATE
+from constants import BATCH_SIZE, DEVICE, EPOCHS, LATENT_DIM
 from model_utils import EarlyStopping, objective
 from plotting import generate_images, plot_latent_space
 from sklearn.datasets import fetch_olivetti_faces
