@@ -26,7 +26,8 @@ if __name__ == '__main__':
 
     model_save_dir = './weights/'
     # model_name = 'model_31.pth'
-    model_name = 'context_model_trained.pth'
+    # model_name = 'context_model_trained.pth'
+    model_name = 'context_model_31.pth'
     model_path = os.path.join(model_save_dir, model_name)
     plot_save_dir = './plots/'
 
@@ -43,7 +44,7 @@ if __name__ == '__main__':
 
     # faces transform
     transform = transforms.Compose([
-        transforms.Resize((16, 16)),  # Resize images to a consistent size (128x128)
+        transforms.Resize((128, 128)),  # Resize images to a consistent size (128x128)
         transforms.ToTensor(),  # Convert PIL images to tensors
         transforms.Normalize(  # Normalize pixel values
             mean=[0.485, 0.456, 0.406],  # These are standard mean values for RGB images
@@ -67,13 +68,14 @@ if __name__ == '__main__':
     elif not TRAINING:
         # load in model weights and set to eval mode
         nn_model.load_state_dict(torch.load(model_path, map_location=DEVICE))
-        nn_model.eval()
+
         print("Loaded in Model")
     else:
         print("Please set the training flag to True or False to train or load in a model")
 
     ctx = torch.tensor([
-        # hero, non-hero, food, spell, side-facing
+        # sprites: hero, non-hero, food, spell, side-facing
+        # faces: white, black, asian, indian, others
         [1, 0, 0, 0, 0],
         [1, 0, 0, 0, 0],
         [0, 0, 0, 0, 1],
@@ -83,6 +85,8 @@ if __name__ == '__main__':
         [0, 0, 1, 0, 0],
         [0, 0, 1, 0, 0],
     ]).float().to(DEVICE)
+
+    nn_model.eval()
     samples, intermediate_ddpm = sample_ddpm(ctx.shape[0], nn_model, ctx)
 
     # Generate the animation (assuming plot_sample returns a matplotlib FuncAnimation object)

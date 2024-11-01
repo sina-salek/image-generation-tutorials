@@ -1,6 +1,7 @@
 import torch
 from diffusion_utils import EmbedFC, ResidualConvBlock, UnetDown, UnetUp
 from torch import nn
+from torch.nn import functional as F
 
 
 class ContextUnet(nn.Module):
@@ -21,7 +22,9 @@ class ContextUnet(nn.Module):
         self.down2 = UnetDown(n_feat, 2 * n_feat)  # down2 #[10, 256, 4,  4]
 
         # original: self.to_vec = nn.Sequential(nn.AvgPool2d(7), nn.GELU())
-        self.to_vec = nn.Sequential(nn.AvgPool2d((4)), nn.GELU())
+        pool_size = self.h // 4
+        # self.to_vec = nn.Sequential(nn.AvgPool2d((4)), nn.GELU())
+        self.to_vec = nn.Sequential(nn.AvgPool2d(pool_size), nn.GELU())
 
         # Embed the timestep and context labels with a one-layer fully connected neural network
         self.timeembed1 = EmbedFC(1, 2 * n_feat)
@@ -75,6 +78,7 @@ class ContextUnet(nn.Module):
         temb2 = self.timeembed2(t).view(-1, self.n_feat, 1, 1)
         # print(f"uunet forward: cemb1 {cemb1.shape}. temb1 {temb1.shape}, cemb2 {cemb2.shape}. temb2 {temb2.shape}")
 
+        # up1 = F.interpolate(hiddenvec, size=(down2.shape[2], down2.shape[3]), mode='bilinear', align_corners=False) # quick fix to deal with different sizes.
         up1 = self.up0(hiddenvec)
         up2 = self.up1(cemb1 * up1 + temb1, down2)  # add and multiply embeddings
         up3 = self.up2(cemb2 * up2 + temb2, down1)
