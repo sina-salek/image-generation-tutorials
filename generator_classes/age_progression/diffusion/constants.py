@@ -19,4 +19,4 @@ N_EPOCHS = 32
 LRATE = 1e-3
 
 # training flag
-TRAINING = False
+TRAINING = True

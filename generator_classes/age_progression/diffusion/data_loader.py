@@ -2,6 +2,7 @@
 import os
 
 import torch
+import torch.nn.functional as F
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 
@@ -39,20 +40,23 @@ class UTKFaceDataset(Dataset):
         # Extract labels from filename
         # Filename format: [age]_[gender]_[race]_[date&time].jpg
         filename = os.path.basename(img_path)
+        sample = None
         try:
             age, gender, race, _ = filename.split('_', 3)
-            age = int(age)
-            gender = int(gender)
-            race = int(race)
-        except ValueError:
-            raise ValueError(f'Invalid filename format: {filename}.')
+            age = torch.tensor(int(age), dtype=torch.long)
+            gender = torch.tensor(int(gender), dtype=torch.long)
+            race = torch.tensor(int(race), dtype=torch.long)
+            # one-hot encode race
+            race_ohe = F.one_hot(race, num_classes=5).float()
 
-        # Prepare sample
-        sample = {
-            'image': image,
-            'age': torch.tensor(age, dtype=torch.long),
-            'gender': torch.tensor(gender, dtype=torch.long),
-            'race': torch.tensor(race, dtype=torch.long)
-        }
+            # Prepare sample
+            sample = {
+                'image': image,
+                'age': age,
+                'gender': gender,
+                'race': race_ohe
+            }
+        except ValueError:
+            print(f'Invalid filename format: {filename}.')
 
         return sample

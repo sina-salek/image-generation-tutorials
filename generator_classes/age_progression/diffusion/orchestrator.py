@@ -1,14 +1,3 @@
-
-# faces transform
-# transform = transforms.Compose([
-#     transforms.Resize((128, 128)),  # Resize images to a consistent size
-#     transforms.ToTensor(),          # Convert PIL images to tensors
-#     transforms.Normalize(           # Normalize pixel values
-#         mean=[0.485, 0.456, 0.406], # These are standard mean values for RGB images
-#         std=[0.229, 0.224, 0.225]   # These are standard std values for RGB images
-#     )
-# ])
-
 import os
 
 import matplotlib.pyplot as plt
@@ -23,12 +12,15 @@ from age_progression.diffusion.constants import (
     N_FEAT,
     TRAINING,
 )
-from age_progression.diffusion.diffusion_utils import CustomDataset, transform
+from age_progression.diffusion.data_loader import UTKFaceDataset
+
+# from age_progression.diffusion.diffusion_utils import CustomDataset, transform
 from age_progression.diffusion.plotting import plot_sample, show_images
 from age_progression.diffusion.sampling import sample_ddpm
 from age_progression.diffusion.training import train_model
 from age_progression.diffusion.unet import ContextUnet
 from torch.utils.data import DataLoader
+from torchvision import transforms
 
 if __name__ == '__main__':
 
@@ -40,13 +32,27 @@ if __name__ == '__main__':
 
     # load dataset
     root_dir_path = os.path.dirname(os.path.abspath(__file__))
-    data_dir_path = os.path.join(root_dir_path, '..', 'data', 'sprites')
-    images_path = os.path.join(data_dir_path, 'sprites_1788_16x16.npy')
-    labels_path = os.path.join(data_dir_path, 'sprite_labels_nc_1788_16x16.npy')
 
-    # dataset = UTKFaceDataset(root_dir=data_path, transform=transform)
-    dataset = CustomDataset(images_path, labels_path, transform,
-                            null_context=False)
+    # sprites dataset
+    # data_dir_path = os.path.join(root_dir_path, '..', 'data', 'sprites')
+    # images_path = os.path.join(data_dir_path, 'sprites_1788_16x16.npy')
+    # labels_path = os.path.join(data_dir_path, 'sprite_labels_nc_1788_16x16.npy')
+
+    # faces dataset
+    data_path = os.path.join(root_dir_path, '..', 'data', 'UTKFace')
+
+    # faces transform
+    transform = transforms.Compose([
+        transforms.Resize((16, 16)),  # Resize images to a consistent size (128x128)
+        transforms.ToTensor(),  # Convert PIL images to tensors
+        transforms.Normalize(  # Normalize pixel values
+            mean=[0.485, 0.456, 0.406],  # These are standard mean values for RGB images
+            std=[0.229, 0.224, 0.225]  # These are standard std values for RGB images
+        )
+    ])
+    dataset = UTKFaceDataset(root_dir=data_path, transform=transform)
+    # dataset = CustomDataset(images_path, labels_path, transform,
+    #                         null_context=False)
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
 
     # construct model
