@@ -39,3 +39,13 @@ def plot_sample(x_gen_store, n_sample, nrows, save_dir, fn, w, save=False):
     plt.close()
 
     return ani
+
+def show_images(imgs, nrow=2):
+    _, axs = plt.subplots(nrow, imgs.shape[0] // nrow, figsize=(4,2 ))
+    axs = axs.flatten()
+    for img, ax in zip(imgs, axs):
+        img = (img.permute(1, 2, 0).clip(-1, 1).detach().cpu().numpy() + 1) / 2
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.imshow(img)
+    plt.show()

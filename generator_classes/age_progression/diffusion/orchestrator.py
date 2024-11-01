@@ -24,7 +24,7 @@ from age_progression.diffusion.constants import (
     TRAINING,
 )
 from age_progression.diffusion.diffusion_utils import CustomDataset, transform
-from age_progression.diffusion.plotting import plot_sample
+from age_progression.diffusion.plotting import plot_sample, show_images
 from age_progression.diffusion.sampling import sample_ddpm
 from age_progression.diffusion.training import train_model
 from age_progression.diffusion.unet import ContextUnet
@@ -33,6 +33,9 @@ from torch.utils.data import DataLoader
 if __name__ == '__main__':
 
     model_save_dir = './weights/'
+    # model_name = 'model_31.pth'
+    model_name = 'context_model_trained.pth'
+    model_path = os.path.join(model_save_dir, model_name)
     plot_save_dir = './plots/'
 
     # load dataset
@@ -54,20 +57,31 @@ if __name__ == '__main__':
         # set into train mode
         nn_model.train()
         # train model
-        nn_model = train_model(nn_model, N_EPOCHS, LRATE, dataloader, optim, model_save_dir)
+        nn_model = train_model(nn_model, N_EPOCHS, LRATE, dataloader, optim, with_context=True, save_dir=model_save_dir)
     elif not TRAINING:
         # load in model weights and set to eval mode
-        nn_model.load_state_dict(torch.load(f"{model_save_dir}/model_31.pth", map_location=DEVICE))
+        nn_model.load_state_dict(torch.load(model_path, map_location=DEVICE))
         nn_model.eval()
         print("Loaded in Model")
     else:
         print("Please set the training flag to True or False to train or load in a model")
 
-    # Assuming sample_ddpm and plot_sample functions are defined elsewhere
-    samples, intermediate_ddpm = sample_ddpm(32, nn_model)
+    ctx = torch.tensor([
+        # hero, non-hero, food, spell, side-facing
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 1],
+        [0, 1, 0, 0, 0],
+        [0, 1, 0, 0, 0],
+        [0, 0, 1, 0, 0],
+        [0, 0, 1, 0, 0],
+    ]).float().to(DEVICE)
+    samples, intermediate_ddpm = sample_ddpm(ctx.shape[0], nn_model, ctx)
 
     # Generate the animation (assuming plot_sample returns a matplotlib FuncAnimation object)
-    ani = plot_sample(intermediate_ddpm, 32, 4, plot_save_dir, "ani_run", None, save=True)
+    # ani = plot_sample(intermediate_ddpm, 32, 4, plot_save_dir, "ani_run", None, save=True)
 
-    from IPython.display import HTML
-    HTML(ani.to_jshtml())
+    show_images(samples)
+
+    print("Done")
