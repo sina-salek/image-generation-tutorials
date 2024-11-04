@@ -16,6 +16,7 @@ pre-commit = "^4.0.1"
 optuna = "^4.0.0"
 black = "^24.10.0"
 ipython = "^8.29.0"
+sagemaker = "^2.232.3"
 
 
 [build-system]
