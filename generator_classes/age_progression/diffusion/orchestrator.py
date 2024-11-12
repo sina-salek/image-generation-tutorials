@@ -1,6 +1,9 @@
+import logging
 import os
 
+import boto3
 import matplotlib.pyplot as plt
+import sagemaker
 import torch
 from age_progression.diffusion.constants import (
     BATCH_SIZE,
@@ -19,28 +22,42 @@ from age_progression.diffusion.plotting import plot_sample, show_images
 from age_progression.diffusion.sampling import sample_ddpm
 from age_progression.diffusion.training import train_model
 from age_progression.diffusion.unet import ContextUnet
+from sagemaker.pytorch import PyTorch
 from torch.utils.data import DataLoader
 from torchvision import transforms
+from tqdm import tqdm
 
 if __name__ == '__main__':
 
     model_save_dir = './weights/'
-    # model_name = 'model_31.pth'
-    # model_name = 'context_model_trained.pth'
     model_name = 'context_model_31.pth'
     model_path = os.path.join(model_save_dir, model_name)
     plot_save_dir = './plots/'
 
-    # load dataset
+    # Initialize the S3 client
+    s3 = boto3.client('s3')
+
     root_dir_path = os.path.dirname(os.path.abspath(__file__))
+    local_data_path = os.path.join(root_dir_path, '..', '..', 'data', 'UTKFace')
 
-    # sprites dataset
-    # data_dir_path = os.path.join(root_dir_path, '..', 'data', 'sprites')
-    # images_path = os.path.join(data_dir_path, 'sprites_1788_16x16.npy')
-    # labels_path = os.path.join(data_dir_path, 'sprite_labels_nc_1788_16x16.npy')
+    bucket_name = 'face-diffuser'
+    s3_data_path = 'UTKFace'
 
-    # faces dataset
-    data_path = os.path.join(root_dir_path, '..', 'data', 'UTKFace')
+    UPLOAD = True
+    # Set up logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+    if UPLOAD:
+        for root, dirs, files in os.walk(local_data_path):
+            for file in tqdm(files, desc="Uploading files"):
+                local_file_path = os.path.join(root, file)
+                s3_file_path = os.path.join(s3_data_path, file)
+                try:
+                    s3.upload_file(local_file_path, bucket_name, s3_file_path)
+                    logger.info(f'Successfully uploaded {local_file_path} to s3://{bucket_name}/{s3_file_path}')
+                except Exception as e:
+                    logger.error(f'Failed to upload {local_file_path} to s3://{bucket_name}/{s3_file_path}: {e}')
 
     # faces transform
     transform = transforms.Compose([
@@ -51,7 +68,7 @@ if __name__ == '__main__':
             std=[0.229, 0.224, 0.225]  # These are standard std values for RGB images
         )
     ])
-    dataset = UTKFaceDataset(root_dir=data_path, transform=transform)
+    dataset = UTKFaceDataset(root_dir=local_data_path, transform=transform)
     # dataset = CustomDataset(images_path, labels_path, transform,
     #                         null_context=False)
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
