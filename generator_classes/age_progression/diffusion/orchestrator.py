@@ -20,7 +20,7 @@ from age_progression.diffusion.data_loader import UTKFaceDataset
 # from age_progression.diffusion.diffusion_utils import CustomDataset, transform
 from age_progression.diffusion.plotting import plot_sample, show_images
 from age_progression.diffusion.sampling import sample_ddpm
-from age_progression.diffusion.training import train_model
+from age_progression.diffusion.training_utils import train_model
 from age_progression.diffusion.unet import ContextUnet
 from sagemaker.pytorch import PyTorch
 from torch.utils.data import DataLoader
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     bucket_name = 'face-diffuser'
     s3_data_path = 'UTKFace'
 
-    UPLOAD = True
+    UPLOAD = False
     # Set up logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
@@ -69,8 +69,6 @@ if __name__ == '__main__':
         )
     ])
     dataset = UTKFaceDataset(root_dir=local_data_path, transform=transform)
-    # dataset = CustomDataset(images_path, labels_path, transform,
-    #                         null_context=False)
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
 
     # construct model
@@ -83,7 +81,6 @@ if __name__ == '__main__':
         # train model
         nn_model = train_model(nn_model, N_EPOCHS, LRATE, dataloader, optim, with_context=True, save_dir=model_save_dir)
     elif not TRAINING:
-        # load in model weights and set to eval mode
         nn_model.load_state_dict(torch.load(model_path, map_location=DEVICE))
 
         print("Loaded in Model")
