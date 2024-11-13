@@ -42,6 +42,7 @@ if __name__ == '__main__':
 
     bucket_name = 'face-diffuser'
     s3_data_path = 'UTKFace'
+    s3_output_path = 'output'
 
     UPLOAD = False
     # Set up logging
@@ -58,29 +59,32 @@ if __name__ == '__main__':
                     logger.info(f'Successfully uploaded {local_file_path} to s3://{bucket_name}/{s3_file_path}')
                 except Exception as e:
                     logger.error(f'Failed to upload {local_file_path} to s3://{bucket_name}/{s3_file_path}: {e}')
+    sagemaker_session = sagemaker.Session()
+    role = sagemaker.get_execution_role()
 
-    # faces transform
-    transform = transforms.Compose([
-        transforms.Resize((128, 128)),  # Resize images to a consistent size (128x128)
-        transforms.ToTensor(),  # Convert PIL images to tensors
-        transforms.Normalize(  # Normalize pixel values
-            mean=[0.485, 0.456, 0.406],  # These are standard mean values for RGB images
-            std=[0.229, 0.224, 0.225]  # These are standard std values for RGB images
-        )
-    ])
-    dataset = UTKFaceDataset(root_dir=local_data_path, transform=transform)
-    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
+    pytorch_estimator = PyTorch(
+        entry_point='aws_train_script.py',
+        role=role,
+        framework_version='2.2.2',
+        py_version='py311',
+        instance_count=1,
+        instance_type='ml.p3.2xlarge',
+        hyperparameters={
+            'batch_size': BATCH_SIZE,
+            'n_epochs': N_EPOCHS,
+            'learning_rate': LRATE,
+            'n_feat': N_FEAT,
+            'n_cfeat': N_CFEAT,
+            'height': HEIGHT,
+        },
+        output_path=s3_output_path
+    )
 
-    # construct model
-    nn_model = ContextUnet(in_channels=3, n_feat=N_FEAT, n_cfeat=N_CFEAT, height=HEIGHT).to(DEVICE)
-    optim = torch.optim.Adam(nn_model.parameters(), lr=LRATE)
 
     if TRAINING:
-        # set into train mode
-        nn_model.train()
-        # train model
-        nn_model = train_model(nn_model, N_EPOCHS, LRATE, dataloader, optim, with_context=True, save_dir=model_save_dir)
+        pytorch_estimator.fit({'training': s3_data_path})
     elif not TRAINING:
+        nn_model = ContextUnet(in_channels=3, n_feat=N_FEAT, n_cfeat=N_CFEAT, height=HEIGHT).to(DEVICE)
         nn_model.load_state_dict(torch.load(model_path, map_location=DEVICE))
 
         print("Loaded in Model")
